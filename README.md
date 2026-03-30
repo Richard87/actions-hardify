@@ -16,7 +16,14 @@ go install github.com/richard87/actions-hardify@latest
 ## TODO:
 
 - BUG: `error: parsing radix-acr-cleanup/charts/radix-acr-cleanup/templates/deployment.yaml: yaml: line 5: did not find expected node content`
-- Add License and contributor file
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 ## Acknowledgements
 
