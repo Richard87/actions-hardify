@@ -11,7 +11,7 @@ import (
 func TestCompareSemverish(t *testing.T) {
 	tests := []struct {
 		a, b string
-		want int
+		want int // >0 means a > b, <0 means a < b, 0 means equal
 	}{
 		{"v1.0.0", "v0.9.0", 1},
 		{"v0.9.0", "v1.0.0", -1},

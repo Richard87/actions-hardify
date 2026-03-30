@@ -1,6 +1,8 @@
 package hardener
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestFindingType_String(t *testing.T) {
 	tests := []struct {
@@ -11,10 +13,11 @@ func TestFindingType_String(t *testing.T) {
 		{FindingUnpinned, "unpinned"},
 		{FindingOutdated, "outdated"},
 		{FindingType(99), "unknown"},
-	}
-	for _, tt := range tests {
-		if got := tt.ft.String(); got != tt.want {
-			t.Errorf("FindingType(%d).String() = %q, want %q", tt.ft, got, tt.want)
-		}
-	}
-}
+
+
+
+
+
+
+
+}	}		}			t.Errorf("FindingType(%d).String() = %q, want %q", tt.ft, got, tt.want)		if got := tt.ft.String(); got != tt.want {	for _, tt := range tests {	}
