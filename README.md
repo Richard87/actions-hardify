@@ -1,8 +1,18 @@
-# GitHub Actiosn Hardener
+# GitHub Actions Hardener
 
-Create a architecture for a cli application that finds all github actions in a folder and hardens it
+A CLI tool that finds all GitHub Actions workflows in a folder and hardens them.
+
+## Installation
+
+```sh
+go install github.com/richard87/actions-hardify@latest
+```
 
 - Restrict permissions for GITHUB_TOKEN.
 - Pin actions to a full length commit SHA.
 - list outdated versions, suggest upgrade to newest version
 - Use github api to find versions
+
+## Acknowledgements
+
+Thanks to [Step Security](https://github.com/step-security) for the inspiration behind this CLI. 

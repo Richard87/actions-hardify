@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
 
@@ -11,23 +10,51 @@ import (
 	"github.com/richard87/actions-hardify/internal/report"
 	"github.com/richard87/actions-hardify/internal/scanner"
 	"github.com/richard87/actions-hardify/internal/workflow"
+	"github.com/urfave/cli/v3"
 )
 
-func main() {
-	dir := flag.String("dir", ".", "directory to scan for GitHub Actions workflows")
-	token := flag.String("token", os.Getenv("GITHUB_TOKEN"), "GitHub personal access token (defaults to $GITHUB_TOKEN)")
-	dryRun := flag.Bool("dry-run", false, "print a report of findings without modifying files")
-	flag.Parse()
+var version = "dev"
 
-	if err := run(*dir, *token, *dryRun); err != nil {
+func main() {
+	cmd := &cli.Command{
+		Name:    "actions-hardify",
+		Usage:   "Harden GitHub Actions workflow files",
+		Version: version,
+		Description: `What it does:
+  • Restrict GITHUB_TOKEN permissions to least-privilege
+  • Pin third-party actions to full-length commit SHAs
+  • Detect outdated action versions and suggest upgrades`,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "dir",
+				Aliases: []string{"d"},
+				Value:   ".",
+				Usage:   "directory to scan for GitHub Actions workflows",
+			},
+			&cli.StringFlag{
+				Name:    "token",
+				Aliases: []string{"t"},
+				Usage:   "GitHub personal access token",
+				Sources: cli.EnvVars("GITHUB_TOKEN"),
+			},
+			&cli.BoolFlag{
+				Name:    "dry-run",
+				Aliases: []string{"n"},
+				Usage:   "print a report of findings without modifying files",
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			return run(ctx, cmd.String("dir"), cmd.String("token"), cmd.Bool("dry-run"))
+		},
+	}
+
+	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(dir, token string, dryRun bool) error {
-	ctx := context.Background()
-
+func run(ctx context.Context, dir, token string, dryRun bool) error {
 	// 1. Find workflow files
 	paths, err := scanner.FindWorkflows(dir)
 	if err != nil {
