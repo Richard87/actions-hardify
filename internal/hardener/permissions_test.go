@@ -1,5 +1,4 @@
 package hardener
-package hardener
 
 import (
 	"os"
@@ -7,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/richard87/actions-hardify/internal/workflow"
+	"gopkg.in/yaml.v3"
 )
 
 func TestCheckPermissions_NoTopLevel(t *testing.T) {
@@ -99,9 +99,7 @@ jobs:
 
 	applyPermissionFixes(w)
 
-	// Re-verify by re-parsing the modified AST
-	w2 := &workflow.Workflow{Doc: w.Doc}
-	root := w2.Doc.Content[0]
+	root := w.Doc.Content[0]
 	var foundPermissions bool
 	for i := 0; i < len(root.Content)-1; i += 2 {
 		if root.Content[i].Value == "permissions" {
@@ -126,7 +124,6 @@ jobs:
       - uses: actions/checkout@v4
 `)
 
-	// Count permissions keys before
 	root := w.Doc.Content[0]
 	countBefore := countKey(root, "permissions")
 
@@ -152,7 +149,7 @@ func parseWorkflow(t *testing.T, content string) *workflow.Workflow {
 	return w
 }
 
-func countKey(mapping *workflow.Node, key string) int {
+func countKey(mapping *yaml.Node, key string) int {
 	count := 0
 	for i := 0; i < len(mapping.Content)-1; i += 2 {
 		if mapping.Content[i].Value == key {

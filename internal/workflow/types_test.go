@@ -9,11 +9,11 @@ func TestActionRef_IsSHA(t *testing.T) {
 	}{
 		{"abc123", false},
 		{"v4", false},
-		{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", true},  // 40 hex chars
-		{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", false}, // uppercase not allowed
-		{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", false},  // 39 chars
-		{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", false}, // 41 chars
-		{"ghijklmnopqrstuvwxyzghijklmnopqrstuvwxyz", false}, // non-hex chars
+		{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", true},
+		{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", false},
+		{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", false},
+		{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", false},
+		{"ghijklmnopqrstuvwxyzghijklmnopqrstuvwxyz", false},
 	}
 	for _, tt := range tests {
 		a := &ActionRef{Ref: tt.ref}

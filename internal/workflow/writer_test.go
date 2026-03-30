@@ -1,5 +1,4 @@
 package workflow
-package workflow
 
 import (
 	"os"
@@ -31,22 +30,19 @@ jobs:
 		t.Fatalf("Write() error: %v", err)
 	}
 
-	// Read back and verify it's valid YAML
 	written, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("ReadFile() error: %v", err)
 	}
 	if len(written) == 0 {
+		t.Fatal("written file is empty")
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-}	}		t.Errorf("re-parsed Jobs = %d, want 1", len(w2.Jobs))	if len(w2.Jobs) != 1 {	}		t.Fatalf("re-Parse() error: %v", err)	if err != nil {	w2, err := Parse(path)	// Re-parse to verify	}		t.Fatal("written file is empty")
+	w2, err := Parse(path)
+	if err != nil {
+		t.Fatalf("re-Parse() error: %v", err)
+	}
+	if len(w2.Jobs) != 1 {
+		t.Errorf("re-parsed Jobs = %d, want 1", len(w2.Jobs))
+	}
+}
