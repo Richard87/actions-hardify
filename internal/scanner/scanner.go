@@ -6,37 +6,29 @@ import (
 	"strings"
 )
 
-// FindWorkflows returns all .yml/.yaml files under dir/.github/workflows.
-// Falls back to scanning dir directly if no .github/workflows exists.
+// FindWorkflows returns all .yml/.yaml files directly inside dir/.github/workflows.
+// Only direct children are returned — subdirectories are not traversed.
 func FindWorkflows(dir string) ([]string, error) {
-	var files []string
-
 	workflowDir := filepath.Join(dir, ".github", "workflows")
-	if err := collectYAML(workflowDir, &files); err != nil && !os.IsNotExist(err) {
+
+	entries, err := os.ReadDir(workflowDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
-	if len(files) == 0 {
-		if err := collectYAML(dir, &files); err != nil && !os.IsNotExist(err) {
-			return nil, err
+	var files []string
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		ext := strings.ToLower(filepath.Ext(e.Name()))
+		if ext == ".yml" || ext == ".yaml" {
+			files = append(files, filepath.Join(workflowDir, e.Name()))
 		}
 	}
 
 	return files, nil
-}
-
-func collectYAML(dir string, out *[]string) error {
-	return filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-		ext := strings.ToLower(filepath.Ext(path))
-		if ext == ".yml" || ext == ".yaml" {
-			*out = append(*out, path)
-		}
-		return nil
-	})
 }
