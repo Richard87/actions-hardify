@@ -3,6 +3,7 @@ package report
 import (
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -18,23 +19,25 @@ func Print(w io.Writer, findings []hardener.Finding) {
 
 	// Build per-location rows, aggregating permission status with pin/outdated info.
 	type row struct {
-		loc, perms, old, new string
+		file, loc, perms, old, new string
 	}
 
 	// Track which locations have permission findings.
-	permStatus := make(map[string]string)
+	type locKey struct{ file, loc string }
+	permStatus := make(map[locKey]string)
 	for _, f := range findings {
 		if f.Type == hardener.FindingPermissions {
-			loc := location(f)
-			permStatus[loc] = f.Message
+			file, loc := splitLocation(f)
+			permStatus[locKey{file, loc}] = f.Message
 		}
 	}
 
 	var rows []row
-	seen := make(map[string]bool)
+	seen := make(map[locKey]bool)
 
 	for _, f := range findings {
-		loc := location(f)
+		file, loc := splitLocation(f)
+		key := locKey{file, loc}
 
 		if f.Type == hardener.FindingPermissions {
 			// Only emit a row if there's no pin/outdated finding at this location.
@@ -43,7 +46,7 @@ func Print(w io.Writer, findings []hardener.Finding) {
 		}
 
 		perms := "ok"
-		if msg, exists := permStatus[loc]; exists {
+		if msg, exists := permStatus[key]; exists {
 			perms = msg
 		}
 
@@ -53,12 +56,13 @@ func Print(w io.Writer, findings []hardener.Finding) {
 		}
 
 		rows = append(rows, row{
+			file:  file,
 			loc:   loc,
 			perms: perms,
 			old:   f.Current,
 			new:   newVal,
 		})
-		seen[loc] = true
+		seen[key] = true
 	}
 
 	// Add standalone permission-only findings.
@@ -66,11 +70,13 @@ func Print(w io.Writer, findings []hardener.Finding) {
 		if f.Type != hardener.FindingPermissions {
 			continue
 		}
-		loc := location(f)
-		if seen[loc] {
+		file, loc := splitLocation(f)
+		key := locKey{file, loc}
+		if seen[key] {
 			continue
 		}
 		rows = append(rows, row{
+			file:  file,
 			loc:   loc,
 			perms: f.Message,
 		})
@@ -82,8 +88,10 @@ func Print(w io.Writer, findings []hardener.Finding) {
 	}
 
 	// Compute column widths.
-	locW, permW, oldW, newW := len("LOCATION"), len("PERMISSIONS"), len("OLD"), len("NEW")
+	fileW, locW := len("FILE"), len("LOCATION")
+	permW, oldW, newW := len("PERMISSIONS"), len("OLD"), len("NEW")
 	for _, r := range rows {
+		fileW = max(fileW, len(r.file))
 		locW = max(locW, len(r.loc))
 		permW = max(permW, len(r.perms))
 		oldW = max(oldW, len(r.old))
@@ -95,19 +103,20 @@ func Print(w io.Writer, findings []hardener.Finding) {
 	newW = min(newW, 50)
 
 	sep := "+"
-	for _, cw := range []int{locW, permW, oldW, newW} {
+	for _, cw := range []int{fileW, locW, permW, oldW, newW} {
 		sep += strings.Repeat("-", cw+2) + "+"
 	}
 
-	fmtStr := fmt.Sprintf("| %%-%ds | %%-%ds | %%-%ds | %%-%ds |\n",
-		locW, permW, oldW, newW)
+	fmtStr := fmt.Sprintf("| %%-%ds | %%-%ds | %%-%ds | %%-%ds | %%-%ds |\n",
+		fileW, locW, permW, oldW, newW)
 
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, sep)
-	fmt.Fprintf(w, fmtStr, "LOCATION", "PERMISSIONS", "OLD", "NEW")
+	fmt.Fprintf(w, fmtStr, "FILE", "LOCATION", "PERMISSIONS", "OLD", "NEW")
 	fmt.Fprintln(w, sep)
 	for _, r := range rows {
 		fmt.Fprintf(w, fmtStr,
+			truncate(r.file, fileW),
 			truncate(r.loc, locW),
 			truncate(r.perms, permW),
 			truncate(r.old, oldW),
@@ -118,16 +127,26 @@ func Print(w io.Writer, findings []hardener.Finding) {
 	fmt.Fprintf(w, "\nTotal: %d finding(s)\n", len(rows))
 }
 
-func location(f hardener.Finding) string {
-	file := filepath.Base(f.File)
-	parts := []string{file}
+func splitLocation(f hardener.Finding) (file, loc string) {
+	file = relPath(f.File)
+	var parts []string
 	if f.Job != "" {
 		parts = append(parts, f.Job)
 	}
 	if f.Step != "" {
 		parts = append(parts, f.Step)
 	}
-	return strings.Join(parts, " > ")
+	loc = strings.Join(parts, " > ")
+	return file, loc
+}
+
+func relPath(path string) string {
+	if cwd, err := os.Getwd(); err == nil {
+		if rel, err := filepath.Rel(cwd, path); err == nil {
+			return rel
+		}
+	}
+	return path
 }
 
 func truncate(s string, maxW int) string {

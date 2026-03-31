@@ -38,11 +38,17 @@ func TestPrint_WithFindings(t *testing.T) {
 	Print(&buf, findings)
 	output := buf.String()
 
+	if !strings.Contains(output, "FILE") {
+		t.Error("expected table header 'FILE'")
+	}
 	if !strings.Contains(output, "LOCATION") {
 		t.Error("expected table header 'LOCATION'")
 	}
 	if !strings.Contains(output, "PERMISSIONS") {
 		t.Error("expected table header 'PERMISSIONS'")
+	}
+	if !strings.Contains(output, "build > Checkout") {
+		t.Error("expected 'build > Checkout' in LOCATION column")
 	}
 	if !strings.Contains(output, "actions/checkout@v4") {
 		t.Error("expected action reference in output")
