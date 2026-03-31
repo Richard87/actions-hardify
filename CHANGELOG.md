@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/Richard87/actions-hardify/compare/v0.2.0...v0.3.0) (2026-03-31)
+
+
+### Features
+
+* enhance FindWorkflows to support recursive scanning of .github/workflows directories ([#5](https://github.com/Richard87/actions-hardify/issues/5)) ([4e0ba2d](https://github.com/Richard87/actions-hardify/commit/4e0ba2dee7926883f1864448b78f5fc1e2f4f416))
+* enhance workflow parser and writer to preserve original whitespace and support snapshots ([825a6b2](https://github.com/Richard87/actions-hardify/commit/825a6b22c7c86e0281dbdfe395f797899aa1384a))
+
+
+### Bug Fixes
+
+* cleanup usage ([b2b8c35](https://github.com/Richard87/actions-hardify/commit/b2b8c35dba4dbb2639d3e717f69defed87d70779))
+* show filename and location in output ([9ad4ba6](https://github.com/Richard87/actions-hardify/commit/9ad4ba67eaf68422b367e66d3436cb324d44be81))
+
 ## [0.2.0](https://github.com/Richard87/actions-hardify/compare/v0.1.0...v0.2.0) (2026-03-30)
 
 
