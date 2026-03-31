@@ -19,9 +19,10 @@ func Parse(path string) (*Workflow, error) {
 		return nil, fmt.Errorf("parsing %s: %w", path, err)
 	}
 	w := &Workflow{
-		Path: path,
-		Raw:  data,
-		Doc:  doc,
+		Path:      path,
+		Raw:       data,
+		Doc:       doc,
+		Snapshots: snapshotNodes(&doc),
 	}
 	if doc.Kind != yaml.DocumentNode || len(doc.Content) == 0 {
 		return w, nil
@@ -173,4 +174,22 @@ func CollectActions(w *Workflow) []*ActionRef {
 		}
 	}
 	return refs
+}
+
+// snapshotNodes records every node's Value and LineComment at parse time
+// so the writer can detect which nodes were modified.
+func snapshotNodes(n *yaml.Node) map[*yaml.Node]NodeSnapshot {
+	m := make(map[*yaml.Node]NodeSnapshot)
+	var walk func(*yaml.Node)
+	walk = func(n *yaml.Node) {
+		if n == nil {
+			return
+		}
+		m[n] = NodeSnapshot{Value: n.Value, LineComment: n.LineComment}
+		for _, c := range n.Content {
+			walk(c)
+		}
+	}
+	walk(n)
+	return m
 }

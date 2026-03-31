@@ -2,11 +2,18 @@ package workflow
 
 import "gopkg.in/yaml.v3"
 
+// NodeSnapshot stores the original value of a yaml.Node at parse time.
+type NodeSnapshot struct {
+	Value       string
+	LineComment string
+}
+
 // Workflow represents a parsed GitHub Actions workflow file.
 type Workflow struct {
-	Path string // filesystem path to the YAML file
-	Raw  []byte // original bytes from disk
-	Doc  yaml.Node
+	Path      string // filesystem path to the YAML file
+	Raw       []byte // original bytes from disk
+	Doc       yaml.Node
+	Snapshots map[*yaml.Node]NodeSnapshot // original node values
 
 	Permissions *Permissions
 	Jobs        []Job
