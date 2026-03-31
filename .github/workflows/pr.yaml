@@ -1,102 +1,35 @@
-name: Pull-Request Testing
+name: PR
 on:
   pull_request:
   workflow_dispatch:
-
 permissions: {}
-
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Build docker image
-        run: docker build .
-
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+      - run: go build ./...
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+      - run: go test ./...
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 2
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-        with:
-          go-version-file: "go.mod"
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
-        with:
-          version: v2.10.1
-
-  test:
-    name: Unit Test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
-          go-version-file: "go.mod"
-      - name: Install dependencies
-        run: go mod download
-      - name: Run Tests
-        run: go test `go list ./...`
-
-  verify-code-generation:
-    name: Verify Code Generation
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
         with:
-          go-version-file: "go.mod"
-      - name: Verify Code Generation
-        run: |
-          make verify-generate
-
-  report-swagger-changes:
-    name: Report Changes In Swagger Spec
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - run: git fetch --no-tags --no-recurse-submodules --depth=1  origin master:master
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-        with:
-          go-version-file: "go.mod"
-      - name: Install Swagger
-        run: go install github.com/go-swagger/go-swagger/cmd/swagger@v0.33.1
-      - name: Check breaking changes
-        if: always()
-        id: breaking
-        continue-on-error: true
-        run: |
-          breaking_changes=$(swagger diff --break <(git show origin/master:swaggerui/html/swagger.json) swaggerui/html/swagger.json) >> $GITHUB_OUTPUT
-      - name: Add comment
-        if: failure() && steps.breaking.outcome == 'failure'
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        with:
-          script: console.log('${{ steps.breaking.outputs.breaking_changes }}');
-
-  validate-radixconfig:
-    name: Test RadixConfig
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: equinor/radix-github-actions@b23674a56b82a1da783b507bc7f15e7ca7067dd8 # v2.0.2
-      - run: rx validate radix-config --config-file radixconfig.platform.yaml
-      - run: rx validate radix-config --config-file radixconfig.c2.yaml
-      - run: rx validate radix-config --config-file radixconfig.c3.yaml
-      - run: rx validate radix-config --config-file radixconfig.dev.yaml
-      - run: rx validate radix-config --config-file radixconfig.playground.yaml
+          version: latest

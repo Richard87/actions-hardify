@@ -16,28 +16,25 @@ go install github.com/richard87/actions-hardify@latest
 ## Usage
 
 ```
-actions-hardify                                                 
-Found 1 workflow file(s)
+$ export GITHUB_TOKEN=$(gh auth token)
+$ actions-hardify                                                 
+                      
+Found 2 workflow file(s)
 
-+------------------------------------------------+-------------+----------+--------+
-| LOCATION                                       | PERMISSIONS | OLD      | NEW    |
-+------------------------------------------------+-------------+----------+--------+
-| pr.yaml > build                                | ok          | # v6.0.2 | v6.0.2 |
-| pr.yaml > lint                                 | ok          | # v6.0.2 | v6.0.2 |
-| pr.yaml > lint                                 | ok          | # v6.4.0 | v6.4.0 |
-| pr.yaml > lint > golangci-lint                 | ok          | # v9.2.0 | v9.2.0 |
-| pr.yaml > test                                 | ok          | # v6.0.2 | v6.0.2 |
-| pr.yaml > test                                 | ok          | # v6.4.0 | v6.4.0 |
-| pr.yaml > verify-code-generation               | ok          | # v6.0.2 | v6.0.2 |
-| pr.yaml > verify-code-generation               | ok          | # v6.4.0 | v6.4.0 |
-| pr.yaml > report-swagger-changes               | ok          | # v6.0.2 | v6.0.2 |
-| pr.yaml > report-swagger-changes               | ok          | # v6.4.0 | v6.4.0 |
-| pr.yaml > report-swagger-changes > Add comment | ok          | # v8     | v8     |
-| pr.yaml > validate-radixconfig                 | ok          | # v6.0.2 | v6.0.2 |
-| pr.yaml > validate-radixconfig                 | ok          | # v2.0.2 | v2.0.2 |
-+------------------------------------------------+-------------+----------+--------+
++--------------------------------+----------------+-------------+----------+--------+
+| FILE                           | LOCATION       | PERMISSIONS | OLD      | NEW    |
++--------------------------------+----------------+-------------+----------+--------+
+| .github/workflows/pr.yaml      | build          | ok          | # v6.0.2 | v6.0.2 |
+| .github/workflows/pr.yaml      | build          | ok          | # v6.4.0 | v6.4.0 |
+| .github/workflows/pr.yaml      | test           | ok          | # v6.0.2 | v6.0.2 |
+| .github/workflows/pr.yaml      | test           | ok          | # v6.4.0 | v6.4.0 |
+| .github/workflows/pr.yaml      | lint           | ok          | # v6.0.2 | v6.0.2 |
+| .github/workflows/pr.yaml      | lint           | ok          | # v6.4.0 | v6.4.0 |
+| .github/workflows/pr.yaml      | lint           | ok          | # v9.2.0 | v9.2.0 |
+| .github/workflows/release.yaml | release-please | ok          | # v4.4.0 | v4.4.0 |
++--------------------------------+----------------+-------------+----------+--------+
 
-Total: 13 finding(s)
+Total: 8 finding(s)
 
 ✅ Workflows hardened successfully.
 ```
