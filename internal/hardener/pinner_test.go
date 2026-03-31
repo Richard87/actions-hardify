@@ -56,8 +56,8 @@ jobs:
 	for _, f := range findings {
 		if f.Type == FindingUnpinned {
 			foundUnpinned = true
-			if f.Current != "actions/checkout@v4" {
-				t.Errorf("Current = %q, want %q", f.Current, "actions/checkout@v4")
+			if f.Current != "v4" {
+				t.Errorf("Current = %q, want %q", f.Current, "v4")
 			}
 		}
 	}
@@ -124,4 +124,55 @@ func parseTestWorkflow(t *testing.T, content string) *workflow.Workflow {
 		t.Fatalf("Parse() error: %v", err)
 	}
 	return w
+}
+
+func TestCheckActions_ReusableWorkflow(t *testing.T) {
+	fakeSHA := "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/repos/equinor/radix-reusable-workflows/git/ref/tags/v1.0.1":
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"object": map[string]string{"sha": fakeSHA, "type": "commit"},
+			})
+		case r.URL.Path == "/repos/equinor/radix-reusable-workflows/releases/latest":
+			json.NewEncoder(w).Encode(github.Release{TagName: "v1.0.1"})
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+
+	gh := &github.Client{
+		HTTPClient: srv.Client(),
+		BaseURL:    srv.URL,
+	}
+
+	wf := parseTestWorkflow(t, `name: CI
+on: push
+permissions: {}
+jobs:
+  reusable:
+    permissions:
+      contents: read
+    uses: equinor/radix-reusable-workflows/.github/workflows/template.yml@v1.0.1
+`)
+
+	findings, err := checkActions(context.Background(), wf, gh, true)
+	if err != nil {
+		t.Fatalf("checkActions() error: %v", err)
+	}
+
+	var foundUnpinned bool
+	for _, f := range findings {
+		if f.Type == FindingUnpinned {
+			foundUnpinned = true
+			if f.Current != "v1.0.1" {
+				t.Errorf("Current = %q, want %q", f.Current, "v1.0.1")
+			}
+		}
+	}
+	if !foundUnpinned {
+		t.Error("expected unpinned finding for reusable workflow")
+	}
 }

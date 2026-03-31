@@ -86,11 +86,23 @@ func parseJobs(jobsNode *yaml.Node) []Job {
 			ID:          key.Value,
 			Node:        val,
 			Permissions: findPermissions(val),
+			Uses:        findJobUses(val),
 			Steps:       findSteps(val),
 		}
 		jobs = append(jobs, job)
 	}
 	return jobs
+}
+
+func findJobUses(jobNode *yaml.Node) *ActionRef {
+	for i := 0; i < len(jobNode.Content)-1; i += 2 {
+		key := jobNode.Content[i]
+		val := jobNode.Content[i+1]
+		if key.Value == "uses" && val.Kind == yaml.ScalarNode {
+			return parseActionRef(val)
+		}
+	}
+	return nil
 }
 
 func findSteps(jobNode *yaml.Node) []Step {
@@ -161,6 +173,13 @@ func CollectActions(w *Workflow) []*ActionRef {
 	var refs []*ActionRef
 	seen := make(map[string]bool)
 	for _, job := range w.Jobs {
+		if job.Uses != nil {
+			key := fmt.Sprintf("%s@%s:%d", job.Uses.Full(), job.Uses.Ref, job.Uses.Node.Line)
+			if !seen[key] {
+				seen[key] = true
+				refs = append(refs, job.Uses)
+			}
+		}
 		for _, step := range job.Steps {
 			if step.Uses == nil {
 				continue

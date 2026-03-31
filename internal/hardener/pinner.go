@@ -22,11 +22,17 @@ func checkActions(ctx context.Context, w *workflow.Workflow, gh *github.Client, 
 	cache := make(map[string]*resolved)
 
 	for _, job := range w.Jobs {
+		// Collect all action refs: job-level uses (reusable workflows) + step-level uses.
+		var refs []*workflow.ActionRef
+		if job.Uses != nil {
+			refs = append(refs, job.Uses)
+		}
 		for _, step := range job.Steps {
-			ref := step.Uses
-			if ref == nil {
-				continue
+			if step.Uses != nil {
+				refs = append(refs, step.Uses)
 			}
+		}
+		for _, ref := range refs {
 			cacheKey := ref.String()
 			res, ok := cache[cacheKey]
 			if !ok {
@@ -64,14 +70,12 @@ func checkActions(ctx context.Context, w *workflow.Workflow, gh *github.Client, 
 
 			// Report unpinned action
 			if !ref.IsSHA() && pinSHA != "" {
-				comment := fmt.Sprintf(" # %s", pinTag)
 				findings = append(findings, Finding{
 					File:    w.Path,
 					Job:     job.ID,
-					Step:    step.Name,
 					Type:    FindingUnpinned,
-					Current: ref.String(),
-					Fixed:   ref.Full() + "@" + pinSHA + comment,
+					Current: ref.Ref,
+					Fixed:   pinTag,
 					Message: fmt.Sprintf("pin %s to commit SHA", ref),
 				})
 				if !dryRun {
@@ -89,7 +93,6 @@ func checkActions(ctx context.Context, w *workflow.Workflow, gh *github.Client, 
 				findings = append(findings, Finding{
 					File:    w.Path,
 					Job:     job.ID,
-					Step:    step.Name,
 					Type:    FindingOutdated,
 					Current: currentTag,
 					Fixed:   res.latest,

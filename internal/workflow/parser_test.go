@@ -263,3 +263,60 @@ jobs:
 		t.Errorf("refs[1] = %q, want %q", refs[1].String(), "actions/setup-go@v5")
 	}
 }
+
+func TestParse_ReusableWorkflow(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "ci.yaml")
+	content := `name: CI
+on: push
+permissions: {}
+jobs:
+  reusable:
+    permissions:
+      contents: read
+    uses: equinor/radix-reusable-workflows/.github/workflows/template.yml@v1.0.1
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+`
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	w, err := Parse(path)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	if len(w.Jobs) != 2 {
+		t.Fatalf("len(Jobs) = %d, want 2", len(w.Jobs))
+	}
+	job := w.Jobs[0]
+	if job.ID != "reusable" {
+		t.Errorf("Job.ID = %q, want %q", job.ID, "reusable")
+	}
+	if job.Uses == nil {
+		t.Fatal("expected job-level Uses for reusable workflow")
+	}
+	if job.Uses.Owner != "equinor" {
+		t.Errorf("Owner = %q, want %q", job.Uses.Owner, "equinor")
+	}
+	if job.Uses.Repo != "radix-reusable-workflows" {
+		t.Errorf("Repo = %q, want %q", job.Uses.Repo, "radix-reusable-workflows")
+	}
+	if job.Uses.Path != "/.github/workflows/template.yml" {
+		t.Errorf("Path = %q, want %q", job.Uses.Path, "/.github/workflows/template.yml")
+	}
+	if job.Uses.Ref != "v1.0.1" {
+		t.Errorf("Ref = %q, want %q", job.Uses.Ref, "v1.0.1")
+	}
+
+	refs := CollectActions(w)
+	if len(refs) != 2 {
+		t.Fatalf("len(refs) = %d, want 2", len(refs))
+	}
+	if refs[0].String() != "equinor/radix-reusable-workflows/.github/workflows/template.yml@v1.0.1" {
+		t.Errorf("refs[0] = %q", refs[0].String())
+	}
+}

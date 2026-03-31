@@ -32,6 +32,7 @@ type Job struct {
 	ID          string
 	Node        *yaml.Node
 	Permissions *Permissions
+	Uses        *ActionRef // non-nil for reusable workflow jobs
 	Steps       []Step
 }
 
