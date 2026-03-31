@@ -144,3 +144,53 @@ func TestFindWorkflows_NoGitHubDir(t *testing.T) {
 		t.Fatalf("len(paths) = %d, want 0; got %v", len(paths), paths)
 	}
 }
+
+func TestFindWorkflows_Subdirectories(t *testing.T) {
+	dir := t.TempDir()
+
+	// Root-level workflows.
+	rootWf := filepath.Join(dir, ".github", "workflows")
+	if err := os.MkdirAll(rootWf, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(rootWf, "ci.yml"), []byte("name: ci"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Subdirectory with its own .github/workflows.
+	subWf := filepath.Join(dir, "services", "api", ".github", "workflows")
+	if err := os.MkdirAll(subWf, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(subWf, "build.yaml"), []byte("name: build"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Deeply nested subdirectory.
+	deepWf := filepath.Join(dir, "packages", "lib", "core", ".github", "workflows")
+	if err := os.MkdirAll(deepWf, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(deepWf, "test.yml"), []byte("name: test"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	paths, err := FindWorkflows(dir)
+	if err != nil {
+		t.Fatalf("FindWorkflows() error: %v", err)
+	}
+	if len(paths) != 3 {
+		t.Fatalf("len(paths) = %d, want 3; got %v", len(paths), paths)
+	}
+
+	// Verify all expected files are found.
+	bases := make(map[string]bool)
+	for _, p := range paths {
+		bases[filepath.Base(p)] = true
+	}
+	for _, want := range []string{"ci.yml", "build.yaml", "test.yml"} {
+		if !bases[want] {
+			t.Errorf("expected %s in results, got %v", want, paths)
+		}
+	}
+}

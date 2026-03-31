@@ -3,7 +3,6 @@ package report
 import (
 	"fmt"
 	"io"
-	"path/filepath"
 	"strings"
 
 	"github.com/richard87/actions-hardify/internal/hardener"
@@ -119,8 +118,7 @@ func Print(w io.Writer, findings []hardener.Finding) {
 }
 
 func location(f hardener.Finding) string {
-	file := filepath.Base(f.File)
-	parts := []string{file}
+	parts := []string{f.File}
 	if f.Job != "" {
 		parts = append(parts, f.Job)
 	}
