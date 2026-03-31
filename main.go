@@ -31,6 +31,11 @@ func main() {
 				Value:   ".",
 				Usage:   "directory to scan for GitHub Actions workflows",
 			},
+			&cli.StringSliceFlag{
+				Name:    "folder",
+				Aliases: []string{"f"},
+				Usage:   "project root folder(s) to scan (must contain .github/workflows); can be repeated",
+			},
 			&cli.StringFlag{
 				Name:    "token",
 				Aliases: []string{"t"},
@@ -44,7 +49,7 @@ func main() {
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			return run(ctx, cmd.String("dir"), cmd.String("token"), cmd.Bool("dry-run"))
+			return run(ctx, cmd.String("dir"), cmd.StringSlice("folder"), cmd.String("token"), cmd.Bool("dry-run"))
 		},
 	}
 
@@ -54,11 +59,17 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, dir, token string, dryRun bool) error {
+func run(ctx context.Context, dir string, folders []string, token string, dryRun bool) error {
 	// 1. Find workflow files
-	paths, err := scanner.FindWorkflows(dir)
+	var paths []string
+	var err error
+	if len(folders) > 0 {
+		paths, err = scanner.FindWorkflowsInRoots(folders)
+	} else {
+		paths, err = scanner.FindWorkflows(dir)
+	}
 	if err != nil {
-		return fmt.Errorf("scanning %s: %w", dir, err)
+		return fmt.Errorf("scanning: %w", err)
 	}
 	if len(paths) == 0 {
 		fmt.Println("No workflow files found.")

@@ -194,3 +194,67 @@ func TestFindWorkflows_Subdirectories(t *testing.T) {
 		}
 	}
 }
+
+func TestFindWorkflowsInRoots_MultipleRoots(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create two project roots with workflows.
+	for _, sub := range []string{"projectA", "projectB"} {
+		wfDir := filepath.Join(dir, sub, ".github", "workflows")
+		if err := os.MkdirAll(wfDir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(wfDir, "ci.yml"), []byte("name: "+sub), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	roots := []string{
+		filepath.Join(dir, "projectA"),
+		filepath.Join(dir, "projectB"),
+	}
+	paths, err := FindWorkflowsInRoots(roots)
+	if err != nil {
+		t.Fatalf("FindWorkflowsInRoots() error: %v", err)
+	}
+	if len(paths) != 2 {
+		t.Fatalf("len(paths) = %d, want 2; got %v", len(paths), paths)
+	}
+}
+
+func TestFindWorkflowsInRoots_SkipsMissingWorkflowsDir(t *testing.T) {
+	dir := t.TempDir()
+
+	// One root with workflows, one without.
+	wfDir := filepath.Join(dir, "hasWf", ".github", "workflows")
+	if err := os.MkdirAll(wfDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(wfDir, "ci.yml"), []byte("name: ci"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "noWf"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	paths, err := FindWorkflowsInRoots([]string{
+		filepath.Join(dir, "hasWf"),
+		filepath.Join(dir, "noWf"),
+	})
+	if err != nil {
+		t.Fatalf("FindWorkflowsInRoots() error: %v", err)
+	}
+	if len(paths) != 1 {
+		t.Fatalf("len(paths) = %d, want 1; got %v", len(paths), paths)
+	}
+}
+
+func TestFindWorkflowsInRoots_Empty(t *testing.T) {
+	paths, err := FindWorkflowsInRoots(nil)
+	if err != nil {
+		t.Fatalf("FindWorkflowsInRoots() error: %v", err)
+	}
+	if len(paths) != 0 {
+		t.Fatalf("len(paths) = %d, want 0", len(paths))
+	}
+}
