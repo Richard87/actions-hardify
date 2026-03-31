@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/Richard87/actions-hardify/compare/v0.3.0...v0.4.0) (2026-03-31)
+
+
+### Features
+
+* add FindWorkflowsInRoots function and update CLI to support multiple project roots ([4e36e87](https://github.com/Richard87/actions-hardify/commit/4e36e873a9dff4cc5b3e50ababccb439100ec8e6))
+* enhance workflow handling to support reusable workflows and improve action reference collection ([c0f7bb6](https://github.com/Richard87/actions-hardify/commit/c0f7bb6d3fe34c61042a73b3f52c9b7a60b59d29))
+
 ## [0.3.0](https://github.com/Richard87/actions-hardify/compare/v0.2.0...v0.3.0) (2026-03-31)
 
 
